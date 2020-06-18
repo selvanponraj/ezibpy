@@ -90,10 +90,14 @@ class Orb:
             #(start_date, end_date) = ('2020-06-15T6:00:00', '2020-06-15T7:00:00')
             (start_date, end_date) = (algo_start_time, algo_end_time)
             num_points = 4
-            response = self.ig_service.fetch_historical_prices_by_epic_and_date_range(epic, resolution, start_date, end_date)
+            try:
+                response = self.ig_service.fetch_historical_prices_by_epic_and_date_range(epic, resolution, start_date, end_date)
+            except:
+                logger.error("Historical Data Not found- Try  after 8:30AM UK time")
+                exit(2)
             scan_result_df = response['prices']['last']
-            # print(scan_result_df)
-            if strategy == 'orb' and scan_result_df.size > 4:
+            print(scan_result_df)
+            if strategy == 'orb' and len(scan_result_df) > 4:
                 open_candle = scan_result_df.iloc[0]
                 second_candle = scan_result_df.iloc[1]
                 third_candle = scan_result_df.iloc[2]
@@ -110,7 +114,7 @@ class Orb:
                         'low': round(open_candle['Low'], 2),
                         'edge': float(data_dict[stock])
                     }, ignore_index=True)
-            elif strategy == '10am-buy' and scan_result_df.size > 3:
+            elif strategy == '10am-buy' and len(scan_result_df) > 3:
                 open_candle = scan_result_df.iloc[0]
                 second_candle = scan_result_df.iloc[1]
                 third_candle = scan_result_df.iloc[2]
@@ -126,7 +130,7 @@ class Orb:
                         'low': round(open_candle['Low'], 2),
                         'edge': candle_total_volume
                     }, ignore_index=True)
-            elif strategy == '10am-sell' and scan_result_df.size > 3:
+            elif strategy == '10am-sell' and len(scan_result_df) > 3:
                 open_candle = scan_result_df.iloc[0]
                 second_candle = scan_result_df.iloc[1]
                 third_candle = scan_result_df.iloc[2]
@@ -153,18 +157,26 @@ class Orb:
             qty = quantity[symbol]
             cfd_contract = ibConn.createCFDContract(symbol,'GBP')
             if strategy == 'orb':
-                # create an stop order - buy
-                buy_order = ibConn.createStopOrder(quantity=qty,price=row['high'], stop=row['high'], stop_limit=True)
-                # submit an order (returns order id)
-                buy_orderId = ibConn.placeOrder(cfd_contract, buy_order)
-                # create an stop order - sell
-                sell_order = ibConn.createStopOrder(quantity=-qty, price=row['low'], stop=row['low'], stop_limit=True)
-                # submit an order (returns order id)
-                sell_orderId = ibConn.placeOrder(cfd_contract, sell_order)
+                user_input = input(symbol + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
+                if user_input == 'YES':
+                    # create an stop order - buy
+                    buy_order = ibConn.createStopOrder(quantity=qty,price=row['high'], stop=row['high'], stop_limit=True)
+                    # submit an order (returns order id)
+                    buy_orderId = ibConn.placeOrder(cfd_contract, buy_order)
+                user_input = input(symbol + '-Sell - Would you like to place IB order (Yes/No)? ').upper()
+                if user_input == 'YES':
+                    # create an stop order - sell
+                    sell_order = ibConn.createStopOrder(quantity=-qty, price=row['low'], stop=row['low'], stop_limit=True)
+                    # submit an order (returns order id)
+                    sell_orderId = ibConn.placeOrder(cfd_contract, sell_order)
             elif strategy == '10am-buy':
-                order = ibConn.createBracketOrder(cfd_contract, quantity=qty, entry=row['high'], stop=row['low'])
+                user_input = input(symbol + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
+                if user_input == 'YES':
+                    order = ibConn.createBracketOrder(cfd_contract, quantity=qty, entry=row['high'], stop=row['low'])
             elif strategy == '10am-sell':
-                order = ibConn.createBracketOrder(cfd_contract, quantity=-qty, entry=row['low'], stop=row['high'])
+                user_input = input(symbol + '- Sell - Would you like to place IB order (Yes/No)? ').upper()
+                if user_input == 'YES':
+                    order = ibConn.createBracketOrder(cfd_contract, quantity=-qty, entry=row['low'], stop=row['high'])
             # let order fill
             time.sleep(3)
 
@@ -265,7 +277,7 @@ class Orb:
 if __name__ == '__main__':
     orb = Orb()
     api_time_format = '%Y-%m-%dT%H:%M:%S'
-    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=1))
+    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
     algo_start_time = algo_time.replace(hour=8).replace(minute=00).replace(second=00).strftime(api_time_format)
     algo_end_time = algo_time.replace(hour=9).replace(minute=00).replace(second=00).strftime(api_time_format)
     algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
