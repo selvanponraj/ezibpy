@@ -23,16 +23,21 @@ import time
 
 # initialize ezIBpy
 ibConn = ezibpy.ezIBpy()
-ibConn.connect(clientId=100, host="localhost", port=4001)
+ibConn.connect(clientId=101, host="localhost", port=7497)
 
-# create a contract
-contract = ibConn.createFuturesContract("ES", exchange="GLOBEX", expiry="201609")
+# # create a contract
+# stk_contract = ibConn.createCFDContract("AAPL")
+
+contract = ibConn.createFuturesContract("ES", exchange="GLOBEX", expiry="202006")
+
 
 # create an order
-order = ibConn.createOrder(quantity=1) # use price=X for LMT orders
+order = ibConn.createStopOrder(quantity=-1,price=361.0,stop=360.,stop_limit=True) # use price=X for LMT orders
 
 # submit an order (returns order id)
 orderId = ibConn.placeOrder(contract, order)
+
+print(orderId)
 
 # let order fill
 time.sleep(3)
