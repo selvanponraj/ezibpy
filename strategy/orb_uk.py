@@ -81,6 +81,8 @@ class Orb:
             with open('../resources/' + source + '.csv') as file:
                 selected_stocks = [line.split(',')[0].strip() for line in file]
 
+        (start_date, end_date) = (algo_start_time, algo_end_time)
+
         for stock in selected_stocks:
             words = stock.split('-')
             symbol = words[0]
@@ -88,26 +90,29 @@ class Orb:
             resolution = timeframe
             num_points = window_size
             #(start_date, end_date) = ('2020-06-15T6:00:00', '2020-06-15T7:00:00')
-            (start_date, end_date) = (algo_start_time, algo_end_time)
+            # (start_date, end_date) = (algo_start_time, algo_end_time)
             num_points = 4
             try:
                 response = self.ig_service.fetch_historical_prices_by_epic_and_date_range(epic, resolution, start_date, end_date)
             except:
                 logger.error("Historical Data Not found- Try  after 8:30AM UK time")
                 exit(2)
-            scan_result_df = response['prices']['last']
-            print(symbol)
-            print(len(scan_result_df))
-            if strategy == 'orb' and len(scan_result_df) > 4:
-                open_candle = scan_result_df.iloc[0]
-                second_candle = scan_result_df.iloc[1]
-                third_candle = scan_result_df.iloc[2]
-                fourth_candle = scan_result_df.iloc[3]
-                candle_total_volume = scan_result_df['Volume'].sum()
+            bars = response['prices']['last']
+
+            if strategy == 'orb' and len(bars) > 4:
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
+                fourth_candle = bars.iloc[3]
+                candle_total_volume = bars['Volume'].sum()
 
                 if ((second_candle['High'] < open_candle['High'] and second_candle['Low'] > open_candle['Low']) and
                         (third_candle['High'] < open_candle['High'] and third_candle['Low'] > open_candle['Low']) and
                         (fourth_candle['High'] < open_candle['High'] and fourth_candle['Low'] > open_candle['Low'])):
+
+                    print(symbol)
+                    print(bars)
+
                     orbs = orbs.append({
                         'symbol': symbol,
                         'epic': epic.replace('CASH', 'DAILY'),
@@ -115,18 +120,18 @@ class Orb:
                         'low': round(open_candle['Low'], 2),
                         'edge': float(data_dict[stock])
                     }, ignore_index=True)
-            elif strategy == '10am-buy' and len(scan_result_df) > 3:
-                open_candle = scan_result_df.iloc[0]
-                second_candle = scan_result_df.iloc[1]
-                third_candle = scan_result_df.iloc[2]
-                candle_total_volume = scan_result_df['Volume'].sum()
+            elif strategy == '10am-buy' and len(bars) > 3:
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
+                candle_total_volume = bars['Volume'].sum()
 
-                print((second_candle['High'] < open_candle['High'] and second_candle['Low'] > open_candle['Low']))
-                print( (third_candle['High'] > open_candle['High'] and (third_candle['Close'] > open_candle['Close'])))
+
 
                 if ((second_candle['High'] < open_candle['High'] and second_candle['Low'] > open_candle['Low']) and
                         (third_candle['High'] > open_candle['High'] and (third_candle['Close'] > open_candle['Close']))):
-
+                    print(symbol)
+                    print(bars)
                     orbs = orbs.append({
                         'symbol': symbol,
                         'epic': epic.replace('CASH', 'DAILY'),
@@ -134,18 +139,19 @@ class Orb:
                         'low': round(open_candle['Low'], 2),
                         'edge': candle_total_volume
                     }, ignore_index=True)
-            elif strategy == '10am-sell' and len(scan_result_df) > 3:
-                open_candle = scan_result_df.iloc[0]
-                second_candle = scan_result_df.iloc[1]
-                third_candle = scan_result_df.iloc[2]
-                candle_total_volume = scan_result_df['Volume'].sum()
+            elif strategy == '10am-sell' and len(bars) > 3:
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
+                candle_total_volume = bars['Volume'].sum()
 
-                print((second_candle['High'] < open_candle['High'] and second_candle['Low']  > open_candle['Low'] ))
-                print((third_candle['Low']  < open_candle['Low']  and third_candle['Close'] < open_candle['Close']))
+                # print((second_candle['High'] < open_candle['High'] and second_candle['Low']  > open_candle['Low'] ))
+                # print((third_candle['Low']  < open_candle['Low']  and third_candle['Close'] < open_candle['Close']))
 
                 if ((second_candle['High'] < open_candle['High'] and second_candle['Low']  > open_candle['Low'] ) and
                         (third_candle['Low']  < open_candle['Low']  and third_candle['Close'] < open_candle['Close'])):
-
+                    print(symbol)
+                    print(bars)
                     orbs = orbs.append({
                         'symbol': symbol,
                         'epic': epic.replace('CASH', 'DAILY'),
@@ -295,7 +301,7 @@ if __name__ == '__main__':
     ibConn = ezibpy.ezIBpy()
     ibConn.connect(clientId=100, host="localhost", port=7496)
 
-    strategy = 'orb'
+    strategy = '10am-sell'
     source = "orb_uk_stocks_ig"
 
     user_input = input('Would you like run Scanner (Yes/No)? ').upper()
