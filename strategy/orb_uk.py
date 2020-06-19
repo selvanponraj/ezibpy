@@ -48,7 +48,7 @@ class Orb:
         shares = {}
         for _, row in orbs_df.iterrows():
             shares[row['symbol']] = int(
-                risk/((row['high']+row['low'])/2)
+                (risk/((row['high']+row['low'])/2))*100
             )
         return shares
 
@@ -96,7 +96,8 @@ class Orb:
                 logger.error("Historical Data Not found- Try  after 8:30AM UK time")
                 exit(2)
             scan_result_df = response['prices']['last']
-            print(scan_result_df)
+            print(symbol)
+            print(len(scan_result_df))
             if strategy == 'orb' and len(scan_result_df) > 4:
                 open_candle = scan_result_df.iloc[0]
                 second_candle = scan_result_df.iloc[1]
@@ -120,6 +121,9 @@ class Orb:
                 third_candle = scan_result_df.iloc[2]
                 candle_total_volume = scan_result_df['Volume'].sum()
 
+                print((second_candle['High'] < open_candle['High'] and second_candle['Low'] > open_candle['Low']))
+                print( (third_candle['High'] > open_candle['High'] and (third_candle['Close'] > open_candle['Close'])))
+
                 if ((second_candle['High'] < open_candle['High'] and second_candle['Low'] > open_candle['Low']) and
                         (third_candle['High'] > open_candle['High'] and (third_candle['Close'] > open_candle['Close']))):
 
@@ -136,8 +140,12 @@ class Orb:
                 third_candle = scan_result_df.iloc[2]
                 candle_total_volume = scan_result_df['Volume'].sum()
 
+                print((second_candle['High'] < open_candle['High'] and second_candle['Low']  > open_candle['Low'] ))
+                print((third_candle['Low']  < open_candle['Low']  and third_candle['Close'] < open_candle['Close']))
+
                 if ((second_candle['High'] < open_candle['High'] and second_candle['Low']  > open_candle['Low'] ) and
                         (third_candle['Low']  < open_candle['Low']  and third_candle['Close'] < open_candle['Close'])):
+
                     orbs = orbs.append({
                         'symbol': symbol,
                         'epic': epic.replace('CASH', 'DAILY'),
@@ -157,24 +165,24 @@ class Orb:
             qty = quantity[symbol]
             cfd_contract = ibConn.createCFDContract(symbol,'GBP')
             if strategy == 'orb':
-                user_input = input(symbol + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
+                user_input = input(str(symbol) + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     # create an stop order - buy
                     buy_order = ibConn.createStopOrder(quantity=qty,price=row['high'], stop=row['high'], stop_limit=True)
                     # submit an order (returns order id)
                     buy_orderId = ibConn.placeOrder(cfd_contract, buy_order)
-                user_input = input(symbol + '-Sell - Would you like to place IB order (Yes/No)? ').upper()
+                user_input = input(str(symbol) + '-Sell - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     # create an stop order - sell
                     sell_order = ibConn.createStopOrder(quantity=-qty, price=row['low'], stop=row['low'], stop_limit=True)
                     # submit an order (returns order id)
                     sell_orderId = ibConn.placeOrder(cfd_contract, sell_order)
             elif strategy == '10am-buy':
-                user_input = input(symbol + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
+                user_input = input(str(symbol) + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     order = ibConn.createBracketOrder(cfd_contract, quantity=qty, entry=row['high'], stop=row['low'])
             elif strategy == '10am-sell':
-                user_input = input(symbol + '- Sell - Would you like to place IB order (Yes/No)? ').upper()
+                user_input = input(str(symbol) + '- Sell - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     order = ibConn.createBracketOrder(cfd_contract, quantity=-qty, entry=row['low'], stop=row['high'])
             # let order fill
@@ -285,7 +293,7 @@ if __name__ == '__main__':
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
-    ibConn.connect(clientId=101, host="localhost", port=7497)
+    ibConn.connect(clientId=100, host="localhost", port=7496)
 
     strategy = 'orb'
     source = "orb_uk_stocks_ig"

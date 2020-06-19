@@ -1627,6 +1627,12 @@ class ezIBpy():
         return contract
 
     # -----------------------------------------
+    def createCFDContract(self, symbol, currency="USD", exchange="SMART"):
+        contract_tuple = (symbol, "CFD", exchange, currency, "", 0.0, "")
+        contract = self.createContract(contract_tuple)
+        return contract
+
+    # -----------------------------------------
     def createFuturesContract(self, symbol, currency="USD", expiry=None,
                               exchange="GLOBEX", multiplier=""):
         if symbol[0] == "@":
@@ -1995,8 +2001,8 @@ class ezIBpy():
 
         # make sure the price confirms to th contract
         ticksize = self.contractDetails(contract)["m_minTick"]
-        order.m_lmtPrice = self.roundClosestValid(order.m_lmtPrice, ticksize)
-        order.m_auxPrice = self.roundClosestValid(order.m_auxPrice, ticksize)
+        order.m_lmtPrice = self.roundClosestValid(order.m_lmtPrice, ticksize,2)
+        order.m_auxPrice = self.roundClosestValid(order.m_auxPrice, ticksize,2)
 
         # continue...
         useOrderId = self.orderId if orderId == None else orderId

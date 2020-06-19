@@ -49,7 +49,7 @@ class Orb:
         all_symbols = [asset.symbol for asset in assets]
 
         scan_symbols = set(all_symbols).intersection(set(selected_stocks))
-        # scan_symbols = ['AAL']
+        # scan_symbols = ['DGX']
 
         if scan_symbols:
             barset = self.alpaca.get_barset(
@@ -59,7 +59,7 @@ class Orb:
                 start=algo_start_time,
                 end=algo_end_time
             )
-            # print (barset.df)
+
 
         for symbol in [symbol for symbol in (scan_symbols or [])]:
             bars = barset[symbol]
@@ -72,6 +72,9 @@ class Orb:
                 if ((second_candle.h < open_candle.h and second_candle.l > open_candle.l) and
                         (third_candle.h < open_candle.h and third_candle.l > open_candle.l) and
                         (fourth_candle.h < open_candle.h and fourth_candle.l > open_candle.l)):
+
+                    print(symbol)
+                    print(bars.df)
                     orbs = orbs.append({
                         'symbol': symbol,
                         'high': round(open_candle.h,2),
@@ -85,6 +88,8 @@ class Orb:
 
                 if ((second_candle.h < open_candle.h and second_candle.l > open_candle.l) and
                         (third_candle.h > open_candle.h) and (third_candle.c > open_candle.c)):
+                    print(symbol)
+                    print(bars.df)
                     orbs = orbs.append({
                         'symbol': symbol,
                         'high': round(open_candle.h,2),
@@ -98,6 +103,8 @@ class Orb:
 
                 if ((second_candle.h < open_candle.h and second_candle.l > open_candle.l) and
                         (third_candle.l < open_candle.l) and third_candle.c < open_candle.c):
+                    print(symbol)
+                    print(bars.df)
                     orbs = orbs.append({
                         'symbol': symbol,
                         'high': round(open_candle.h,2),
@@ -156,13 +163,13 @@ class Orb:
 if __name__ == '__main__':
     orb = Orb()
 
-    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
+    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=1))
     algo_start_time = algo_time.replace(hour=9).replace(minute=30).replace(second=00).strftime(api_time_format)
-    algo_end_time = algo_time.replace(hour=10).replace(minute=30).replace(second=00).strftime(api_time_format)
+    algo_end_time = algo_time.replace(hour=10).replace(minute=15).replace(second=00).strftime(api_time_format)
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
-    ibConn.connect(clientId=101, host="localhost", port=7497)
+    ibConn.connect(clientId=101, host="localhost", port=7496)
 
     strategy = 'orb'
     source = "orb_us_stocks"
@@ -180,7 +187,7 @@ if __name__ == '__main__':
         print(scan_results)
         qty = orb.get_qunatity(scan_results, 2500)
         print(qty)
-        orb.place_orders(strategy,scan_results.head(3), qty)
+        orb.place_orders(strategy,scan_results.head(5), qty)
 
 
 
