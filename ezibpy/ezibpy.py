@@ -1919,9 +1919,9 @@ class ezIBpy():
         account = self._get_active_account(account)
 
         # main order
-        enteyOrder = self.createOrder(quantity, price=entry, transmit=False,
+        enteyOrder = self.createStopOrder(quantity, price=entry, stop=entry, transmit=False,
                         tif=tif, fillorkill=fillorkill, iceberg=iceberg,
-                        rth=rth, account=account, **kwargs)
+                        rth=rth, account=account, stop_limit=True,**kwargs)
 
         entryOrderId = self.placeOrder(contract, enteyOrder)
 
