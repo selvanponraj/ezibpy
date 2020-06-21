@@ -163,7 +163,7 @@ class Orb:
 if __name__ == '__main__':
     orb = Orb()
 
-    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=1))
+    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
     algo_start_time = algo_time.replace(hour=9).replace(minute=30).replace(second=00).strftime(api_time_format)
     algo_end_time = algo_time.replace(hour=10).replace(minute=15).replace(second=00).strftime(api_time_format)
 

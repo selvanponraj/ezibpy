@@ -203,14 +203,14 @@ class Orb:
                 user_input = input(epic + ' - BUY - Would you like to place order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     response = self.ig_service.create_working_order('GBP', 'BUY', epic, 'DFB', False, row['high'], qty,
-                                                                    'GOOD_TILL_DATE', 'STOP', None, None, None, None,
-                                                                    position_end_time)
+                                                                    'GOOD_TILL_CANCELLED', 'STOP', None, None, None, None
+                                                                    )
                     print(response)
                     if response['dealStatus'] == 'REJECTED':
                         response = self.ig_service.create_working_order('GBP', 'BUY', epic, 'DFB', False, row['high'],
                                                                         qty,
-                                                                        'GOOD_TILL_DATE', 'LIMIT', None, None, None,
-                                                                        None, position_end_time)
+                                                                        'GOOD_TILL_CANCELLED', 'LIMIT', None, None, None,
+                                                                        None)
                         print(response)
                         if response['dealStatus'] == 'REJECTED':
                             response = self.ig_service.create_open_position('GBP', 'BUY', epic, 'DFB', False, False,
@@ -225,18 +225,15 @@ class Orb:
                 user_input = input(epic + ' - SELL - Would you like to place order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     response = self.ig_service.create_working_order('GBP', 'SELL', epic, 'DFB', False, row['low'], qty,
-                                                                    'GOOD_TILL_DATE', 'STOP', None, None, None, None,
-                                                                    position_end_time)
+                                                                    'GOOD_TILL_CANCELLED', 'STOP', None, None, None, None)
                     print(response)
                     if response['dealStatus'] == 'REJECTED':
                         response = self.ig_service.create_working_order('GBP', 'SELL', epic, 'DFB', False, row['low'],
-                                                                        qty, 'GOOD_TILL_DATE', 'STOP', None, None, None,
-                                                                        None, position_end_time)
+                                                                        qty, 'GOOD_TILL_CANCELLED', 'STOP', None, None, None,None)
                         print(response)
                         if response['dealStatus'] == 'REJECTED':
                             response = self.ig_service.create_open_position('GBP', 'SELL', epic, 'DFB', False, False,
-                                                                            None, None, None, 'MARKET', None, qty, None,
-                                                                            None, None, None)
+                                                                            None, None, None, 'MARKET', None, qty, None,None, None, None)
 
                             print(response)
                 else:
@@ -246,22 +243,16 @@ class Orb:
                 user_input = input(epic + ' - BUY - Would you like to place order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     response = self.ig_service.create_working_order('GBP', 'BUY', epic, 'DFB', False, row['high'], qty,
-                                                                    'GOOD_TILL_DATE', 'STOP', None, None, None,
-                                                                    row['low'],
-                                                                    position_end_time)
+                                                                    'GOOD_TILL_CANCELLED', 'STOP', None, None, None,row['low'])
                     print(response)
                     if response['dealStatus'] == 'REJECTED':
                         response = self.ig_service.create_working_order('GBP', 'BUY', epic, 'DFB', False, row['high'],
-                                                                        qty,
-                                                                        'GOOD_TILL_DATE', 'LIMIT', None, None, None,
-                                                                        row['low'],
-                                                                        position_end_time)
+                                                                        qty,'GOOD_TILL_CANCELLED', 'LIMIT', None, None, None,row['low'])
 
                         print(response)
                         if response['dealStatus'] == 'REJECTED':
                             response = self.ig_service.create_open_position('GBP', 'BUY', epic, 'DFB', False, False,
-                                                                            None, None, None, 'MARKET', None, qty, None,
-                                                                            None, None, None)
+                                                                            None, None, None, 'MARKET', None, qty, None,None, None, None)
                             print(response)
                 else:
                     print("No BUY Order Placed for : " + epic)
@@ -301,7 +292,7 @@ if __name__ == '__main__':
     ibConn = ezibpy.ezIBpy()
     ibConn.connect(clientId=100, host="localhost", port=7496)
 
-    strategy = '10am-sell'
+    strategy = 'orb'
     source = "orb_uk_stocks_ig"
 
     user_input = input('Would you like run Scanner (Yes/No)? ').upper()
@@ -321,14 +312,14 @@ if __name__ == '__main__':
         if user_input == 'YES':
             qty = orb.get_qunatity(scan_results, 2500)
             print(qty)
-            orb.ib_place_orders(strategy,scan_results.head(3), qty)
+            orb.ib_place_orders(strategy,scan_results.head(5), qty)
 
         user_input = input('Would you like to place IG orders (Yes/No)? ').upper()
         if user_input == 'YES':
             ########## IG ORDER ##############
             qty = orb.get_ig_sb_qunatity(scan_results, 500)
             print(qty)
-            orb.ig_place_orders(strategy,scan_results.head(3), qty)
+            orb.ig_place_orders(strategy,scan_results.head(5), qty)
 
 
 
