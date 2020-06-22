@@ -2001,8 +2001,8 @@ class ezIBpy():
 
         # make sure the price confirms to th contract
         ticksize = self.contractDetails(contract)["m_minTick"]
-        order.m_lmtPrice = self.roundClosestValid(order.m_lmtPrice, ticksize,2)
-        order.m_auxPrice = self.roundClosestValid(order.m_auxPrice, ticksize,2)
+        order.m_lmtPrice = self.roundClosestValid(order.m_lmtPrice, ticksize)
+        order.m_auxPrice = self.roundClosestValid(order.m_auxPrice, ticksize)
 
         # continue...
         useOrderId = self.orderId if orderId == None else orderId
