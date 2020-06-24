@@ -41,8 +41,8 @@ class Orb:
 
         self.ig_service.create_session()
 
-        self.accounts = self.ig_service.fetch_accounts()
-        print("accounts:\n%s" % self.accounts)
+        # self.accounts = self.ig_service.fetch_accounts()
+        # print("accounts:\n%s" % self.accounts)
 
     def get_qunatity(self,orbs_df, risk):
         shares = {}
@@ -169,20 +169,30 @@ class Orb:
         for _, row in scan_results.iterrows():
             symbol = row['symbol']
             qty = quantity[symbol]
+            risk = ((row['high'] - row['low']) * qty) + 6
             cfd_contract = ibConn.createCFDContract(symbol,'GBP')
+
+
             if strategy == 'orb':
+                print(' Profit : 100' + '-Risk : ' + str(risk), + '-RR :' + str(100 / risk))
                 user_input = input(str(symbol) + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
-                    # create an stop order - buy
-                    buy_order = ibConn.createStopOrder(quantity=qty,price=row['high'], stop=row['high'], stop_limit=True)
-                    # submit an order (returns order id)
-                    buy_orderId = ibConn.placeOrder(cfd_contract, buy_order)
+                    # # create an stop order - buy
+                    # buy_order = ibConn.createStopOrder(quantity=qty,price=row['high'], stop=row['high'], stop_limit=True)
+                    # # submit an order (returns order id)
+                    # buy_orderId = ibConn.placeOrder(cfd_contract, buy_order)
+                    target = row['high'] + (100 / qty) * 100
+                    buy_orderId = ibConn.createBracketOrder(cfd_contract, quantity=qty, entry=row['high'], target=target)
+                    print(' Profit : 100' + '-Risk : ' + str(risk), + '-RR :' + str(100/risk))
                 user_input = input(str(symbol) + '-Sell - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
-                    # create an stop order - sell
-                    sell_order = ibConn.createStopOrder(quantity=-qty, price=row['low'], stop=row['low'], stop_limit=True)
-                    # submit an order (returns order id)
-                    sell_orderId = ibConn.placeOrder(cfd_contract, sell_order)
+                    # # create an stop order - sell
+                    # sell_order = ibConn.createStopOrder(quantity=-qty, price=row['low'], stop=row['low'], stop_limit=True)
+                    # # submit an order (returns order id)
+                    # sell_orderId = ibConn.placeOrder(cfd_contract, sell_order)
+                    target = row['low'] - (100 / qty) * 100
+                    sell_orderId = ibConn.createBracketOrder(cfd_contract, quantity=-qty, entry=row['low'], target=row['high'])
+
             elif strategy == '10am-buy':
                 user_input = input(str(symbol) + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
@@ -310,14 +320,14 @@ if __name__ == '__main__':
         ########## IB ORDER ##############
         user_input = input('Would you like to place IB orders (Yes/No)? ').upper()
         if user_input == 'YES':
-            qty = orb.get_qunatity(scan_results, 2500)
+            qty = orb.get_qunatity(scan_results, 5000)
             print(qty)
             orb.ib_place_orders(strategy,scan_results.head(5), qty)
 
         user_input = input('Would you like to place IG orders (Yes/No)? ').upper()
         if user_input == 'YES':
             ########## IG ORDER ##############
-            qty = orb.get_ig_sb_qunatity(scan_results, 500)
+            qty = orb.get_ig_sb_qunatity(scan_results, 1000)
             print(qty)
             orb.ig_place_orders(strategy,scan_results.head(5), qty)
 
