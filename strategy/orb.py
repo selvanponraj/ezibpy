@@ -34,12 +34,12 @@ class Orb:
     def alpaca_scanners(self,strategy,source,timeframe='15Min'):
         data_dict = {}
         if strategy == 'orb':
-            window_size = 4
+            window_size = 5
             with open('../resources/' + source + '.csv') as file:
                 data_dict = dict(filter(None, csv.reader(file)))
                 selected_stocks = data_dict.keys()
         else:
-            window_size = 3
+            window_size = 5
             with open('../resources/'+source+'.csv') as file:
                 selected_stocks = [line.split(',')[0].strip() for line in file]
 
@@ -49,7 +49,7 @@ class Orb:
         all_symbols = [asset.symbol for asset in assets]
 
         scan_symbols = set(all_symbols).intersection(set(selected_stocks))
-        # scan_symbols = ['DGX']
+        # scan_symbols = ['PH']
 
         if scan_symbols:
             barset = self.alpaca.get_barset(
@@ -63,12 +63,16 @@ class Orb:
 
         for symbol in [symbol for symbol in (scan_symbols or [])]:
             bars = barset[symbol]
-            if strategy == 'orb' and len(bars) == 4:
-                open_candle = bars[-4]
-                second_candle = bars[-3]
-                third_candle = bars[-2]
-                fourth_candle = bars[-1]
+            # print(symbol)
+            # print(bars.df)
+            if strategy == 'orb' and len(bars) > 4:
+                open_candle = bars[0]
+                second_candle = bars[1]
+                third_candle = bars[2]
+                fourth_candle = bars[3]
 
+                # print(symbol)
+                # print(bars.df)
                 if ((second_candle.h < open_candle.h and second_candle.l > open_candle.l) and
                         (third_candle.h < open_candle.h and third_candle.l > open_candle.l) and
                         (fourth_candle.h < open_candle.h and fourth_candle.l > open_candle.l)):
@@ -81,10 +85,10 @@ class Orb:
                         'low': round(open_candle.l,2),
                         'edge':float(data_dict[symbol])
                     }, ignore_index=True)
-            elif strategy == '10am-buy' and len(bars) == 3:
-                open_candle = bars[-3]
-                second_candle = bars[-2]
-                third_candle = bars[-1]
+            elif strategy == '10am-buy' and len(bars) > 3:
+                open_candle = bars[0]
+                second_candle = bars[1]
+                third_candle = bars[2]
 
                 if ((second_candle.h < open_candle.h and second_candle.l > open_candle.l) and
                         (third_candle.h > open_candle.h) and (third_candle.c > open_candle.c)):
@@ -96,10 +100,10 @@ class Orb:
                         'low': round(open_candle.l,2),
                         'edge': third_candle.v
                     }, ignore_index=True)
-            elif strategy == '10am-sell' and len(bars) == 3:
-                open_candle = bars[-3]
-                second_candle = bars[-2]
-                third_candle = bars[-1]
+            elif strategy == '10am-sell' and len(bars) > 3:
+                open_candle = bars[0]
+                second_candle = bars[1]
+                third_candle = bars[2]
 
                 if ((second_candle.h < open_candle.h and second_candle.l > open_candle.l) and
                         (third_candle.l < open_candle.l) and third_candle.c < open_candle.c):
@@ -165,7 +169,7 @@ if __name__ == '__main__':
 
     algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
     algo_start_time = algo_time.replace(hour=9).replace(minute=30).replace(second=00).strftime(api_time_format)
-    algo_end_time = algo_time.replace(hour=10).replace(minute=15).replace(second=00).strftime(api_time_format)
+    algo_end_time = algo_time.replace(hour=10).replace(minute=30).replace(second=00).strftime(api_time_format)
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
@@ -185,7 +189,7 @@ if __name__ == '__main__':
         print("Placing Orders ....")
         scan_results = pd.read_csv('../scan_results/us_' + strategy + r'_result.csv')
         print(scan_results)
-        qty = orb.get_qunatity(scan_results, 2500)
+        qty = orb.get_qunatity(scan_results, 5000)
         print(qty)
         orb.place_orders(strategy,scan_results.head(5), qty)
 
