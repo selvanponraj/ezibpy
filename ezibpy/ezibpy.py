@@ -2171,7 +2171,7 @@ class ezIBpy():
 
             # tickerId = self.tickerId(contract.m_symbol)
             tickerId = self.tickerId(self.contractString(contract))
-            self.ibConn.reqHistoricalData(
+            result = self.ibConn.reqHistoricalData(
                 tickerId       = tickerId,
                 contract       = contract,
                 endDateTime    = end_datetime,

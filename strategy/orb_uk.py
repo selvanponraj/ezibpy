@@ -68,6 +68,7 @@ class Orb:
             exit(2)
 
 
+
     def ig_scanners(self,strategy,source,timeframe='15Min'):
         orbs = pd.DataFrame(columns=['symbol', 'epic', 'high', 'low', 'edge'])
         data_dict = {}
@@ -99,13 +100,15 @@ class Orb:
                 exit(2)
             bars = response['prices']['last']
 
+            # print(symbol)
+            # print(bars)
+
             if strategy == 'orb' and len(bars) > 4:
                 open_candle = bars.iloc[0]
                 second_candle = bars.iloc[1]
                 third_candle = bars.iloc[2]
                 fourth_candle = bars.iloc[3]
                 candle_total_volume = bars['Volume'].sum()
-
                 if ((second_candle['High'] < open_candle['High'] and second_candle['Low'] > open_candle['Low']) and
                         (third_candle['High'] < open_candle['High'] and third_candle['Low'] > open_candle['Low']) and
                         (fourth_candle['High'] < open_candle['High'] and fourth_candle['Low'] > open_candle['Low'])):
@@ -125,9 +128,6 @@ class Orb:
                 second_candle = bars.iloc[1]
                 third_candle = bars.iloc[2]
                 candle_total_volume = bars['Volume'].sum()
-
-
-
                 if ((second_candle['High'] < open_candle['High'] and second_candle['Low'] > open_candle['Low']) and
                         (third_candle['High'] > open_candle['High'] and (third_candle['Close'] > open_candle['Close']))):
                     print(symbol)
@@ -165,33 +165,101 @@ class Orb:
             orbs.to_csv('../scan_results/uk_' + strategy + r'_result.csv', header=True, index=None, sep=',')
         return orbs;
 
+    def ib_scanners(self,strategy,source,timeframe='15Min'):
+        orbs = pd.DataFrame(columns=['symbol', 'epic', 'high', 'low', 'edge'])
+        data_dict = {}
+        with open('../resources/' + source + '.csv') as file:
+            data_dict = dict(filter(None, csv.reader(file)))
+            selected_stocks = data_dict.keys()
+        (start_date, end_date) = (algo_start_time, algo_end_time)
+        import pandas
+        dirpath = './../scan_results/ib/'
+
+        for symbol in selected_stocks:
+            bars = pandas.read_csv(dirpath+symbol+'.csv')
+
+            if strategy == 'orb' and len(bars) > 4:
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
+                fourth_candle = bars.iloc[3]
+
+                # print(symbol)
+                # print(bars)
+                if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
+                        (third_candle.H < open_candle.H and third_candle.L > open_candle.L) and
+                        (fourth_candle.H < open_candle.H and fourth_candle.L > open_candle.L)):
+                    print(symbol)
+                    print(bars)
+                    orbs = orbs.append({
+                        'symbol': symbol,
+                        'high': round(open_candle.H, 2),
+                        'low': round(open_candle.L, 2),
+                        'edge': float(data_dict[symbol])
+                    }, ignore_index=True)
+            elif strategy == '10am-buy' and len(bars) > 3:
+                open_candle = bars[0]
+                second_candle = bars[1]
+                third_candle = bars[2]
+
+                if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
+                        (third_candle.H > open_candle.H) and (third_candle.C > open_candle.C)):
+                    print(symbol)
+                    print(bars.df)
+                    orbs = orbs.append({
+                        'symbol': symbol,
+                        'high': round(open_candle.H, 2),
+                        'low': round(open_candle.L, 2),
+                        'edge': third_candle.V
+                    }, ignore_index=True)
+            elif strategy == '10am-sell' and len(bars) > 3:
+                open_candle = bars[0]
+                second_candle = bars[1]
+                third_candle = bars[2]
+
+                if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
+                        (third_candle.L < open_candle.L) and third_candle.C < open_candle.C):
+                    print(symbol)
+                    print(bars.df)
+                    orbs = orbs.append({
+                        'symbol': symbol,
+                        'high': round(open_candle.H, 2),
+                        'low': round(open_candle.L, 2),
+                        'edge': third_candle.V
+                    }, ignore_index=True)
+
+        orbs = orbs.sort_values(['edge'], ascending=[False])
+        if not orbs.empty:
+            open('../scan_results/us_' + strategy + r'_result.csv', 'w').close()
+            orbs.to_csv('../scan_results/us_' + strategy + r'_result.csv', header=True, index=None, sep=',')
+        return orbs;
+
     def ib_place_orders(self,strategy,scan_results,quantity):
         for _, row in scan_results.iterrows():
             symbol = row['symbol']
             qty = quantity[symbol]
             risk = ((row['high'] - row['low']) * qty) + 6
+            rr = float(100 / risk)
             cfd_contract = ibConn.createCFDContract(symbol,'GBP')
-
-
             if strategy == 'orb':
-                print(' Profit : 100' + '-Risk : ' + str(risk), + '-RR :' + str(100 / risk))
+                print(' Profit : 100' + '-Risk : ' + str(risk) + '-RR :' + str(rr))
                 user_input = input(str(symbol) + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     # # create an stop order - buy
-                    # buy_order = ibConn.createStopOrder(quantity=qty,price=row['high'], stop=row['high'], stop_limit=True)
-                    # # submit an order (returns order id)
-                    # buy_orderId = ibConn.placeOrder(cfd_contract, buy_order)
+                    buy_order = ibConn.createStopOrder(quantity=qty,price=row['high'], stop=row['high'], stop_limit=True)
+                    # submit an order (returns order id)
+                    buy_orderId = ibConn.placeOrder(cfd_contract, buy_order)
                     target = row['high'] + (100 / qty) * 100
-                    buy_orderId = ibConn.createBracketOrder(cfd_contract, quantity=qty, entry=row['high'], target=target)
-                    print(' Profit : 100' + '-Risk : ' + str(risk), + '-RR :' + str(100/risk))
+                    # buy_orderId = ibConn.createBracketOrder(cfd_contract, quantity=qty, entry=row['high'], target=target)
+
                 user_input = input(str(symbol) + '-Sell - Would you like to place IB order (Yes/No)? ').upper()
                 if user_input == 'YES':
                     # # create an stop order - sell
-                    # sell_order = ibConn.createStopOrder(quantity=-qty, price=row['low'], stop=row['low'], stop_limit=True)
-                    # # submit an order (returns order id)
-                    # sell_orderId = ibConn.placeOrder(cfd_contract, sell_order)
+                    sell_order = ibConn.createStopOrder(quantity=-qty, price=row['low'], stop=row['low'], stop_limit=True)
+                    # submit an order (returns order id)
+                    sell_orderId = ibConn.placeOrder(cfd_contract, sell_order)
                     target = row['low'] - (100 / qty) * 100
-                    sell_orderId = ibConn.createBracketOrder(cfd_contract, quantity=-qty, entry=row['low'], target=row['high'])
+                    # sell_orderId = ibConn.createBracketOrder(cfd_contract, quantity=-qty, entry=row['low'], target=row['high'])
 
             elif strategy == '10am-buy':
                 user_input = input(str(symbol) + '- Buy - Would you like to place IB order (Yes/No)? ').upper()
@@ -300,14 +368,14 @@ if __name__ == '__main__':
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
-    ibConn.connect(clientId=100, host="localhost", port=7496)
+    ibConn.connect(clientId=100, host="localhost", port=7497)
 
     strategy = 'orb'
-    source = "orb_uk_stocks_ig"
+    source = "orb_uk_stocks"
 
     user_input = input('Would you like run Scanner (Yes/No)? ').upper()
     if user_input == 'YES':
-        scan_results = orb.ig_scanners(strategy, source)
+        scan_results = orb.ib_scanners(strategy, source)
         print(strategy + " Scan Results:")
         print(scan_results.to_string(index=False))
 

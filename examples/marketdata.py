@@ -25,16 +25,17 @@ import time
 ibConn = ezibpy.ezIBpy()
 
 # connect to IB (7496/7497 = TWS, 4001 = IBGateway)
-ibConn.connect(clientId=100, host="localhost", port=4001)
+ibConn.connect(clientId=100, host="localhost", port=7497)
 
 # create some contracts using dedicated methods
 stk_contract = ibConn.createStockContract("AAPL")
-fut_contract = ibConn.createFuturesContract("ES", expiry="201606")
-csh_contract = ibConn.createCashContract("EUR", currency="USD")
-opt_contract = ibConn.createOptionContract("AAPL", expiry="20160425", strike=105.0, otype="PUT")
+# stk_contract = ibConn.createStockContract("IAG",currency="GBP",exchange="LSE")
+# fut_contract = ibConn.createFuturesContract("ES", expiry="202007")
+# csh_contract = ibConn.createCashContract("EUR", currency="USD")
+# opt_contract = ibConn.createOptionContract("AAPL", expiry="20160425", strike=105.0, otype="PUT")
 
 # ...or using a contract tuple
-oil_contract = ibConn.createContract(("CL", "FUT", "NYMEX", "USD", "201606", 0.0, ""))
+oil_contract = ibConn.createContract(("CL", "FUT", "NYMEX", "USD", "202007", 0.0, ""))
 
 # request market data for all created contracts
 ibConn.requestMarketData()

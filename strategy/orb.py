@@ -6,7 +6,7 @@ import datetime
 from pytz import timezone
 import ezibpy
 import time
-
+import pandas
 
 API_KEY = "PK26EO0HRJ9C4I5F1ZW6"
 API_SECRET = "0Ai1yhlabukF7KtWsrY8XeNBC7s2CGZZKuMNDkjf"
@@ -60,7 +60,6 @@ class Orb:
                 end=algo_end_time
             )
 
-
         for symbol in [symbol for symbol in (scan_symbols or [])]:
             bars = barset[symbol]
             # print(symbol)
@@ -107,8 +106,8 @@ class Orb:
 
                 if ((second_candle.h < open_candle.h and second_candle.l > open_candle.l) and
                         (third_candle.l < open_candle.l) and third_candle.c < open_candle.c):
-                    print(symbol)
-                    print(bars.df)
+                    # print(symbol)
+                    # print(bars.df)
                     orbs = orbs.append({
                         'symbol': symbol,
                         'high': round(open_candle.h,2),
@@ -120,6 +119,72 @@ class Orb:
         if not orbs.empty:
             open('../scan_results/us_'+strategy + r'_result.csv', 'w').close()
             orbs.to_csv('../scan_results/us_'+strategy + r'_result.csv', header=True, index=None, sep=',')
+        return orbs;
+
+    def ib_scanners(self, strategy, source, timeframe='15Min'):
+        orbs = pd.DataFrame(columns=['symbol', 'high', 'low', 'edge'])
+        data_dict = {}
+        with open('../resources/' + source + '.csv') as file:
+            data_dict = dict(filter(None, csv.reader(file)))
+            selected_stocks = data_dict.keys()
+
+        for symbol in selected_stocks:
+            symbol=symbol.replace(" ", '_')
+            bars = pandas.read_csv(dirpath + symbol + '.csv').tail(5)
+            print(symbol)
+            print(bars)
+            if strategy == 'orb' and len(bars) > 4:
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
+                fourth_candle = bars.iloc[3]
+
+                if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
+                        (third_candle.H < open_candle.H and third_candle.L > open_candle.L) and
+                        (fourth_candle.H < open_candle.H and fourth_candle.L > open_candle.L)):
+                    print(symbol)
+                    print(bars)
+                    orbs = orbs.append({
+                        'symbol': symbol,
+                        'high': round(open_candle.H, 2),
+                        'low': round(open_candle.L, 2),
+                        'edge': float(data_dict[symbol])
+                    }, ignore_index=True)
+            elif strategy == '10am-buy' and len(bars) > 3:
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
+
+                if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
+                        (third_candle.H > open_candle.H) and (third_candle.C > open_candle.C)):
+                    print(symbol)
+                    print(bars)
+                    orbs = orbs.append({
+                        'symbol': symbol,
+                        'high': round(open_candle.H, 2),
+                        'low': round(open_candle.L, 2),
+                        'edge': third_candle.V
+                    }, ignore_index=True)
+            elif strategy == '10am-sell' and len(bars) > 3:
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
+
+                if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
+                        (third_candle.L < open_candle.L) and third_candle.C < open_candle.C):
+                    print(symbol)
+                    print(bars)
+                    orbs = orbs.append({
+                        'symbol': symbol,
+                        'high': round(open_candle.H, 2),
+                        'low': round(open_candle.L, 2),
+                        'edge': third_candle.V
+                    }, ignore_index=True)
+
+        orbs = orbs.sort_values(['edge'], ascending=[False])
+        if not orbs.empty:
+            open('../scan_results/us_' + strategy + r'_result.csv', 'w').close()
+            orbs.to_csv('../scan_results/us_' + strategy + r'_result.csv', header=True, index=None, sep=',')
         return orbs;
 
     # Wait for market to open.
@@ -173,14 +238,19 @@ if __name__ == '__main__':
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
-    ibConn.connect(clientId=101, host="localhost", port=7496)
+    ibConn.connect(clientId=101, host="localhost", port=7497)
 
-    strategy = 'orb'
+    strategy = '10am-sell'
     source = "orb_us_stocks"
+    dirpath = './../scan_results/' + source.split('_')[1]+'/'
+
+    # bars = pandas.read_csv(dirpath + 'AAL' + '.csv').tail(4)
+    # print(bars)
 
     user_input = input('Would you like run Scanner (Yes/No)? ').upper()
     if user_input == 'YES':
-        scan_results = orb.alpaca_scanners(strategy, source)
+        # scan_results = orb.alpaca_scanners(strategy, source)
+        scan_results = orb.ib_scanners(strategy, source)
         print(strategy + " Scan Results:")
         print(scan_results.to_string(index=False))
 
@@ -189,7 +259,7 @@ if __name__ == '__main__':
         print("Placing Orders ....")
         scan_results = pd.read_csv('../scan_results/us_' + strategy + r'_result.csv')
         print(scan_results)
-        qty = orb.get_qunatity(scan_results, 5000)
+        qty = orb.get_qunatity(scan_results, 10000)
         print(qty)
         orb.place_orders(strategy,scan_results.head(5), qty)
 

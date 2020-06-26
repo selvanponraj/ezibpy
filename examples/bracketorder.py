@@ -23,7 +23,7 @@ import time
 
 # initialize ezIBpy
 ibConn = ezibpy.ezIBpy()
-ibConn.connect(clientId=100, host="localhost", port=4001)
+ibConn.connect(clientId=100, host="localhost", port=7496)
 
 # create a contract
 contract = ibConn.createFuturesContract("ES", exchange="GLOBEX", expiry="201609")
