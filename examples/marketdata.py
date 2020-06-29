@@ -28,29 +28,34 @@ ibConn = ezibpy.ezIBpy()
 ibConn.connect(clientId=100, host="localhost", port=7497)
 
 # create some contracts using dedicated methods
-stk_contract = ibConn.createStockContract("AAPL")
+# stk_contract = ibConn.createStockContract("AAPL")
+# index_contract = ibConn.createStockContract("ES")
 # stk_contract = ibConn.createStockContract("IAG",currency="GBP",exchange="LSE")
-# fut_contract = ibConn.createFuturesContract("ES", expiry="202007")
+# fut_contract = ibConn.createFuturesContract("ES", expiry="202009")
 # csh_contract = ibConn.createCashContract("EUR", currency="USD")
 # opt_contract = ibConn.createOptionContract("AAPL", expiry="20160425", strike=105.0, otype="PUT")
 
 # ...or using a contract tuple
-oil_contract = ibConn.createContract(("CL", "FUT", "NYMEX", "USD", "202007", 0.0, ""))
+# oil_contract = ibConn.createContract(("CL", "FUT", "NYMEX", "USD", "202007", 0.0, ""))
+
+contracts=[]
+contracts.append(index_contract)
+# contracts.append(index_contract)
 
 # request market data for all created contracts
-ibConn.requestMarketData()
+ibConn.requestMarketData(contracts)
 
 # wait 30 seconds
-time.sleep(30)
+time.sleep(10)
 
 # print market data
 print("Market Data")
 print(ibConn.marketData)
 
-print("")
-
-print("Options Data")
-print(ibConn.optionsData)
+# print("")
+#
+# print("Options Data")
+# print(ibConn.optionsData)
 
 # cancel market data request & disconnect
 ibConn.cancelMarketData()

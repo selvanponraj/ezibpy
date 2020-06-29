@@ -249,9 +249,11 @@ if __name__ == '__main__':
 
     user_input = input('Would you like run Scanner (Yes/No)? ').upper()
     if user_input == 'YES':
-        # scan_results = orb.alpaca_scanners(strategy, source)
+        alpaca_scan_results = orb.alpaca_scanners(strategy, source)
         scan_results = orb.ib_scanners(strategy, source)
-        print(strategy + " Scan Results:")
+        # print(strategy + " Alpaca Scan Results:")
+        # print(alpaca_scan_results.to_string(index=False))
+        print(strategy + " IB Scan Results:")
         print(scan_results.to_string(index=False))
 
     user_input = input('Would you like to place orders (Yes/No)? ').upper()

@@ -69,7 +69,7 @@ class Orb:
 
 
 
-    def ig_scanners(self,strategy,source,timeframe='15Min'):
+    def ig_scanners(self,strategy,source='orb_uk_stocks_ig',timeframe='15Min'):
         orbs = pd.DataFrame(columns=['symbol', 'epic', 'high', 'low', 'edge'])
         data_dict = {}
         if strategy == 'orb':
@@ -165,27 +165,24 @@ class Orb:
             orbs.to_csv('../scan_results/uk_' + strategy + r'_result.csv', header=True, index=None, sep=',')
         return orbs;
 
-    def ib_scanners(self,strategy,source,timeframe='15Min'):
-        orbs = pd.DataFrame(columns=['symbol', 'epic', 'high', 'low', 'edge'])
+    def ib_scanners(self, strategy, source='orb_uk_stocks', timeframe='15Min'):
+        orbs = pd.DataFrame(columns=['symbol', 'high', 'low', 'edge'])
         data_dict = {}
         with open('../resources/' + source + '.csv') as file:
             data_dict = dict(filter(None, csv.reader(file)))
             selected_stocks = data_dict.keys()
-        (start_date, end_date) = (algo_start_time, algo_end_time)
-        import pandas
-        dirpath = './../scan_results/ib/'
 
         for symbol in selected_stocks:
-            bars = pandas.read_csv(dirpath+symbol+'.csv')
-
+            symbol = symbol.replace(" ", '_')
+            bars = pd.read_csv(dirpath + symbol + '.csv').tail(5)
+            # print(symbol)
+            # print(bars)
             if strategy == 'orb' and len(bars) > 4:
                 open_candle = bars.iloc[0]
                 second_candle = bars.iloc[1]
                 third_candle = bars.iloc[2]
                 fourth_candle = bars.iloc[3]
 
-                # print(symbol)
-                # print(bars)
                 if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
                         (third_candle.H < open_candle.H and third_candle.L > open_candle.L) and
                         (fourth_candle.H < open_candle.H and fourth_candle.L > open_candle.L)):
@@ -198,14 +195,14 @@ class Orb:
                         'edge': float(data_dict[symbol])
                     }, ignore_index=True)
             elif strategy == '10am-buy' and len(bars) > 3:
-                open_candle = bars[0]
-                second_candle = bars[1]
-                third_candle = bars[2]
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
 
                 if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
                         (third_candle.H > open_candle.H) and (third_candle.C > open_candle.C)):
                     print(symbol)
-                    print(bars.df)
+                    print(bars)
                     orbs = orbs.append({
                         'symbol': symbol,
                         'high': round(open_candle.H, 2),
@@ -213,14 +210,14 @@ class Orb:
                         'edge': third_candle.V
                     }, ignore_index=True)
             elif strategy == '10am-sell' and len(bars) > 3:
-                open_candle = bars[0]
-                second_candle = bars[1]
-                third_candle = bars[2]
+                open_candle = bars.iloc[0]
+                second_candle = bars.iloc[1]
+                third_candle = bars.iloc[2]
 
                 if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
                         (third_candle.L < open_candle.L) and third_candle.C < open_candle.C):
                     print(symbol)
-                    print(bars.df)
+                    print(bars)
                     orbs = orbs.append({
                         'symbol': symbol,
                         'high': round(open_candle.H, 2),
@@ -368,22 +365,28 @@ if __name__ == '__main__':
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
-    ibConn.connect(clientId=100, host="localhost", port=7497)
+    ibConn.connect(clientId=100, host="localhost", port=7496)
 
     strategy = 'orb'
     source = "orb_uk_stocks"
+    dirpath = './../scan_results/' + source.split('_')[1] + '/'
 
     user_input = input('Would you like run Scanner (Yes/No)? ').upper()
     if user_input == 'YES':
-        scan_results = orb.ib_scanners(strategy, source)
-        print(strategy + " Scan Results:")
+        source = "orb_uk_stocks_ig"
+        ig_scan_results = orb.ig_scanners(strategy)
+
+        print(strategy + " IG Scan Results:")
+        print(ig_scan_results.to_string(index=False))
+        scan_results = orb.ib_scanners(strategy)
+        print(strategy + " IB Scan Results:")
         print(scan_results.to_string(index=False))
 
     user_input = input('Would you like to place orders (Yes/No)? ').upper()
     if user_input == 'YES':
         print("Placing Orders ....")
         scan_results = pd.read_csv('../scan_results/uk_' + strategy + r'_result.csv')
-        print(scan_results)
+        # print(scan_results)
 
         ########## IB ORDER ##############
         user_input = input('Would you like to place IB orders (Yes/No)? ').upper()

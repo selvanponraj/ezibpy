@@ -54,7 +54,7 @@ def get_history(source='orb_us_stocks',currency="USD", exchange="SMART"):
             time.sleep(1)
             count = len([name for name in os.listdir(dirpath) if not name.startswith(".")])
             if count >= len(selected_stocks):
-                print('Historical Data Fetched')
+                print('Historical Data Fetched Count : ' + str(count))
                 ibConn.cancelHistoricalData()
                 ibConn.disconnect()
                 exit(2)
@@ -68,19 +68,18 @@ if __name__ == '__main__':
 
     api_time_format = '%Y%m%d %H:%M:%S'
     algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
-    algo_end_time = algo_time.replace(hour=15).replace(minute=45).replace(second=00).strftime(api_time_format)
+
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
-    ibConn.connect(clientId=100, host="localhost", port=7497)
+    ibConn.connect(clientId=501, host="localhost", port=4002)
 
-    source = 'orb_us_stocks'
-    dirpath = './../scan_results/' + source.split('_')[1]+'/'
-
+    source = 'orb_uk_stocks'
+    dirpath = './../scan_results/' + source.split('_')[1] + '/'
     print(dirpath)
-
     shutil.rmtree(dirpath)
     os.mkdir(dirpath)
-
-    # get_history(source,currency='GBP',exchange='LSE')
-    get_history(source)
+    algo_end_time = algo_time.replace(hour=9).replace(minute=15).replace(second=00).strftime(api_time_format)
+    get_history('orb_uk_stocks',currency='GBP',exchange='LSE')
+    # algo_end_time = algo_time.replace(hour=15).replace(minute=45).replace(second=00).strftime(api_time_format)
+    # get_history('orb_us_stocks')
