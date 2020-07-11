@@ -41,45 +41,53 @@ def get_history(source='orb_us_stocks',currency="USD", exchange="SMART"):
     with open('../resources/' + source + '.csv') as file:
         data_dict = dict(filter(None, csv.reader(file)))
         selected_stocks = data_dict.keys()
-
+    count = 0
     for symbol in selected_stocks:
-        contracts.append(ibConn.createStockContract(symbol=symbol, currency=currency, exchange=exchange))
+        # if count == 50:
+        #     ibConn.disconnect()
+        #     ibConn.connect(clientId=101, host="localhost", port=7497)
+        #     count = 0
+        contract = ibConn.createStockContract(symbol=symbol, currency=currency, exchange=exchange)
+        ibConn.requestHistoricalData(contract, resolution="15 mins", lookback="1 D", csv_path=dirpath,
+                                     end_datetime=algo_end_time)
+        run = True
+        while run:
+            if (os.path.isfile(dirpath+symbol.replace(' ', '_')+'.csv')):
+                ibConn.cancelHistoricalData(contract)
+                # count = count + 1
+                run = False
 
-    ibConn.requestHistoricalData(contracts=contracts, resolution="15 mins", lookback="1 D", csv_path=dirpath,
-                                 end_datetime=algo_end_time)
 
-    # wait until stopped using Ctrl-c
-    try:
-        while True:
-            time.sleep(1)
-            count = len([name for name in os.listdir(dirpath) if not name.startswith(".")])
-            if count >= len(selected_stocks):
-                print('Historical Data Fetched Count : ' + str(count))
-                ibConn.cancelHistoricalData()
-                ibConn.disconnect()
-                exit(2)
-    except (KeyboardInterrupt, SystemExit):
-        # cancel request & disconnect
-        ibConn.cancelHistoricalData()
-        ibConn.disconnect()
+    # # wait until stopped using Ctrl-c
+    # try:
+    #     while True:
+    #         time.sleep(1)
+    #         count = len([name for name in os.listdir(dirpath) if not name.startswith(".")])
+    #         if count >= len(selected_stocks):
+    #             print('Historical Data Fetched Count : ' + str(count))
+    #             ibConn.cancelHistoricalData()
+    #             ibConn.disconnect()
+    #             exit(2)
+    # except (KeyboardInterrupt, SystemExit):
+    #     # cancel request & disconnect
+    #     ibConn.cancelHistoricalData()
+    #     ibConn.disconnect()
 
 
 if __name__ == '__main__':
 
     api_time_format = '%Y%m%d %H:%M:%S'
-    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
+    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=1))
 
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
-    ibConn.connect(clientId=501, host="localhost", port=4002)
+    ibConn.connect(clientId=101, host="localhost", port=7497)
 
     source = 'orb_uk_stocks'
     dirpath = './../scan_results/' + source.split('_')[1] + '/'
     print(dirpath)
     shutil.rmtree(dirpath)
     os.mkdir(dirpath)
-    algo_end_time = algo_time.replace(hour=9).replace(minute=15).replace(second=00).strftime(api_time_format)
-    get_history('orb_uk_stocks',currency='GBP',exchange='LSE')
-    # algo_end_time = algo_time.replace(hour=15).replace(minute=45).replace(second=00).strftime(api_time_format)
-    # get_history('orb_us_stocks')
+    algo_end_time = algo_time.replace(hour=15).replace(minute=45).replace(second=00).strftime(api_time_format)
+    get_history('orb_uk_stocks','GBP','LSE')
