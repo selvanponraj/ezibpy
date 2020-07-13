@@ -62,9 +62,9 @@ class Orb:
 
         for symbol in [symbol for symbol in (scan_symbols or [])]:
             bars = barset[symbol]
-            # print(symbol)
-            # print(bars.df)
-            if strategy == 'orb' and len(bars) > 4:
+            print(symbol)
+            print(bars.df)
+            if strategy == 'orb' and len(bars) >= 4:
                 open_candle = bars[0]
                 second_candle = bars[1]
                 third_candle = bars[2]
@@ -98,7 +98,7 @@ class Orb:
                         'tp1': tp1,
                         'tp2': tp2
                     }, ignore_index=True)
-            elif strategy == '10am-buy' and len(bars) > 3:
+            elif strategy == '10am-buy' and len(bars) >= 3:
                 open_candle = bars[0]
                 second_candle = bars[1]
                 third_candle = bars[2]
@@ -125,7 +125,7 @@ class Orb:
                         'tp1': tp1,
                         'tp2': tp2
                     }, ignore_index=True)
-            elif strategy == '10am-sell' and len(bars) > 3:
+            elif strategy == '10am-sell' and len(bars) >= 3:
                 open_candle = bars[0]
                 second_candle = bars[1]
                 third_candle = bars[2]
@@ -188,7 +188,7 @@ class Orb:
                 bars = bars[bars.index >= bar_start_time]
                 bars = bars[bars.index <= bar_end_time]
 
-                if len(bars) > 4:
+                if len(bars) >= 4:
                     open_candle = bars.iloc[0]
                     second_candle = bars.iloc[1]
                     third_candle = bars.iloc[2]
@@ -342,7 +342,7 @@ class Orb:
 if __name__ == '__main__':
     orb = Orb()
 
-    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=2))
+    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
     algo_start_time = algo_time.replace(hour=9).replace(minute=30).replace(second=00).strftime(api_time_format)
     algo_end_time = algo_time.replace(hour=10).replace(minute=30).replace(second=00).strftime(api_time_format)
 
@@ -363,6 +363,7 @@ if __name__ == '__main__':
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
 
+    print(strategy)
 
     capital = 10000
     source = "orb_us_stocks"
@@ -387,7 +388,7 @@ if __name__ == '__main__':
 
     user_input = input('Would you like run IB Scanner (Yes/No)? ').upper()
     if user_input == 'YES':
-        ibConn.connect(clientId=102, host="localhost", port=7497)
+        ibConn.connect(clientId=102, host="localhost", port=4001)
         scan_results = orb.ib_scanners(strategy, source)
         print(strategy.upper() + " IB Scan Results:")
         print(scan_results.to_string(index=False))

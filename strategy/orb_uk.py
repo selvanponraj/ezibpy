@@ -507,6 +507,7 @@ if __name__ == '__main__':
     ibConn.connect(clientId=100, host="localhost", port=7497)
 
     capital = 10000
+    strategy = 'orb'
     source = "orb_uk_stocks"
     dirpath = './../scan_results/' + source.split('_')[1] + '/'
 

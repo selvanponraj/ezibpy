@@ -61,11 +61,16 @@ def get_history(source='orb_us_stocks',currency="USD", exchange="SMART"):
         ibConn.requestHistoricalData(contract, resolution="15 mins", lookback="1 D", csv_path=dirpath,
                                      end_datetime=algo_end_time)
         run = True
+        count = 0
         while run:
             if is_non_zero_file(fpath):
                 ibConn.cancelHistoricalData(contract)
                 # count = count + 1
                 run = False
+            else:
+                count = count + 1
+                if count == 50:
+                    run = False
 
     # # wait until stopped using Ctrl-c
     # try:
@@ -86,7 +91,7 @@ def get_history(source='orb_us_stocks',currency="USD", exchange="SMART"):
 if __name__ == '__main__':
 
     api_time_format = '%Y%m%d %H:%M:%S'
-    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=1))
+    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
