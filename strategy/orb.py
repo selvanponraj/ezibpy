@@ -346,12 +346,25 @@ if __name__ == '__main__':
     algo_start_time = algo_time.replace(hour=9).replace(minute=30).replace(second=00).strftime(api_time_format)
     algo_end_time = algo_time.replace(hour=10).replace(minute=30).replace(second=00).strftime(api_time_format)
 
+    st_list = ['10am-buy', '10am-sell', 'orb']
+    print("Available Strategies:")
+    for i, strategy in enumerate(st_list, start=1):
+        print('{}. {}'.format(i, strategy))
+
+    while True:
+        try:
+            selected = int(input('Select a strategy (1-{}): '.format(i)))
+            strategy = st_list[selected - 1]
+            print('You have selected {}'.format(strategy))
+            break
+        except (ValueError, IndexError):
+            print('This is not a valid selection. Please enter number between 1 and {}!'.format(i))
+
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
 
 
     capital = 10000
-    strategy = 'orb'
     source = "orb_us_stocks"
     dirpath = './../scan_results/' + source.split('_')[1]+'/'
 
