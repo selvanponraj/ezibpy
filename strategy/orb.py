@@ -225,11 +225,13 @@ class Orb:
                     bar_time_format)
                 bars = bars[bars.index >= bar_start_time]
                 bars = bars[bars.index <= bar_end_time]
-                if len(bars) > 3:
+
+                if len(bars) >= 3:
                     open_candle = bars.iloc[0]
                     second_candle = bars.iloc[1]
                     third_candle = bars.iloc[2]
-
+                    print(symbol)
+                    print(bars)
                     if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
                             third_candle.C > open_candle.H):
                         # print(symbol)
@@ -262,15 +264,17 @@ class Orb:
                 bars = bars[bars.index >= bar_start_time]
                 bars = bars[bars.index <= bar_end_time]
                 bars_total_volume = bars['V'].sum()
-                if len(bars) > 3:
+
+                if len(bars) >= 3:
                     open_candle = bars.iloc[0]
                     second_candle = bars.iloc[1]
                     third_candle = bars.iloc[2]
-
+                    # print(symbol)
+                    # print(bars)
                     if ((second_candle.H < open_candle.H and second_candle.L > open_candle.L) and
                             third_candle.C < open_candle.L):
-                        # print(symbol)
-                        # print(bars)
+                        print(symbol)
+                        print(bars)
                         high = round(third_candle.H, 2)
                         low = round(third_candle.L, 2)
                         cp = ((high - low) / ((high + low) / 2)) * 100
@@ -362,6 +366,7 @@ if __name__ == '__main__':
 
     # initialize ezIBpy
     ibConn = ezibpy.ezIBpy()
+    ibConn.connect(clientId=102, host="localhost", port=7497)
 
     print(strategy)
 
@@ -388,10 +393,19 @@ if __name__ == '__main__':
 
     user_input = input('Would you like run IB Scanner (Yes/No)? ').upper()
     if user_input == 'YES':
-        ibConn.connect(clientId=102, host="localhost", port=4001)
+
         scan_results = orb.ib_scanners(strategy, source)
         print(strategy.upper() + " IB Scan Results:")
         print(scan_results.to_string(index=False))
+
+    user_input = input('Would you like to place alpaca orders (Yes/No)? ').upper()
+    if user_input == 'YES':
+        print("Placing Orders ....")
+        scan_results = pd.read_csv('../scan_results/us_' + strategy + r'_alpaca_result.csv')
+        print(scan_results)
+        qty = orb.get_qunatity(scan_results, 10000)
+        print(qty)
+        orb.place_orders(strategy, scan_results, qty)
 
     user_input = input('Would you like to place orders (Yes/No)? ').upper()
     if user_input == 'YES':

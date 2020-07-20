@@ -236,7 +236,7 @@ class Orb:
                 bars = bars[bars.index >= bar_start_time]
                 bars = bars[bars.index <= bar_end_time]
 
-                if len(bars) > 4:
+                if len(bars) >= 4:
 
                     open_candle = bars.iloc[0]
                     second_candle = bars.iloc[1]
@@ -275,7 +275,10 @@ class Orb:
                     bar_time_format)
                 bars = bars[bars.index >= bar_start_time]
                 bars = bars[bars.index <= bar_end_time]
-                if len(bars) > 3:
+
+                print (bars)
+
+                if len(bars) >= 3:
                     open_candle = bars.iloc[0]
                     second_candle = bars.iloc[1]
                     third_candle = bars.iloc[2]
@@ -314,7 +317,7 @@ class Orb:
                 bars = bars[bars.index >= bar_start_time]
                 bars = bars[bars.index <= bar_end_time]
 
-                if len(bars) > 3:
+                if len(bars) >= 3:
                     open_candle = bars.iloc[0]
                     second_candle = bars.iloc[1]
                     third_candle = bars.iloc[2]
@@ -482,7 +485,7 @@ class Orb:
 if __name__ == '__main__':
     orb = Orb()
     api_time_format = '%Y-%m-%dT%H:%M:%S'
-    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=2))
+    algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
     algo_start_time = algo_time.replace(hour=8).replace(minute=00).replace(second=00).strftime(api_time_format)
     algo_end_time = algo_time.replace(hour=9).replace(minute=00).replace(second=00).strftime(api_time_format)
     # algo_time = timezone('UTC').localize(datetime.datetime.today() - timedelta(days=0))
@@ -507,7 +510,7 @@ if __name__ == '__main__':
     ibConn.connect(clientId=100, host="localhost", port=7497)
 
     capital = 10000
-    strategy = 'orb'
+    # strategy = 'orb'
     source = "orb_uk_stocks"
     dirpath = './../scan_results/' + source.split('_')[1] + '/'
 

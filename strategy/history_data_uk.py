@@ -67,10 +67,10 @@ def get_history(source='orb_us_stocks',currency="USD", exchange="SMART"):
                 ibConn.cancelHistoricalData(contract)
                 # count = count + 1
                 run = False
-            else:
-                count = count + 1
-                if count == 50:
-                    run = False
+            # else:
+            #     count = count + 1
+            #     if count == 50:
+            #         run = False
 
     # # wait until stopped using Ctrl-c
     # try:
